@@ -7,6 +7,8 @@ import {
   Supplier,
   AuditItem,
   SystemSettings,
+  Substation,
+  TransmissionLine,
   PageId,
   OptimizationScenario
 } from '../types';
@@ -17,7 +19,9 @@ import {
   MOCK_TEAMS,
   MOCK_SUPPLIERS,
   MOCK_AUDIT_ITEMS,
-  DEFAULT_SETTINGS
+  DEFAULT_SETTINGS,
+  MOCK_SUBSTATIONS,
+  MOCK_TRANSMISSION_LINES
 } from '../data/mockData';
 import { generateEventsFromSpans } from '../services/eventEngine';
 import { runOptimizationScenarios, OptimizationInputs } from '../services/optimizerEngine';
@@ -26,6 +30,8 @@ interface AppContextType {
   activePage: PageId;
   setActivePage: (page: PageId) => void;
   spans: TransmissionSpan[];
+  substations: Substation[];
+  transmissionLines: TransmissionLine[];
   events: VegetationEvent[];
   activities: ScheduleActivity[];
   teams: Team[];
@@ -47,6 +53,14 @@ interface AppContextType {
   setFilterLine: (line: string) => void;
   filterRegion: string;
   setFilterRegion: (region: string) => void;
+  filterSubsystem?: string;
+  setFilterSubsystem?: (subsystem: string) => void;
+  filterState?: string;
+  setFilterState?: (state: string) => void;
+  filterVoltage?: string;
+  setFilterVoltage?: (voltage: string) => void;
+  searchText?: string;
+  setSearchText?: (text: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -54,6 +68,8 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [activePage, setActivePage] = useState<PageId>('dashboard');
   const [spans, setSpans] = useState<TransmissionSpan[]>(MOCK_SPANS);
+  const [substations] = useState<Substation[]>(MOCK_SUBSTATIONS);
+  const [transmissionLines] = useState<TransmissionLine[]>(MOCK_TRANSMISSION_LINES);
   const [events, setEvents] = useState<VegetationEvent[]>(MOCK_EVENTS);
   const [activities, setActivities] = useState<ScheduleActivity[]>(MOCK_SCHEDULE_ACTIVITIES);
   const [teams, setTeams] = useState<Team[]>(MOCK_TEAMS);
@@ -66,6 +82,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Global filters
   const [filterLine, setFilterLine] = useState<string>('all');
   const [filterRegion, setFilterRegion] = useState<string>('all');
+  const [filterSubsystem, setFilterSubsystem] = useState<string>('all');
+  const [filterState, setFilterState] = useState<string>('all');
+  const [filterVoltage, setFilterVoltage] = useState<string>('all');
+  const [searchText, setSearchText] = useState<string>('');
 
   // Ensure automatic event generation when spans/settings change
   useEffect(() => {
@@ -187,7 +207,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         filterLine,
         setFilterLine,
         filterRegion,
-        setFilterRegion
+        setFilterRegion,
+        substations,
+        transmissionLines,
+        filterSubsystem,
+        setFilterSubsystem,
+        filterState,
+        setFilterState,
+        filterVoltage,
+        setFilterVoltage,
+        searchText,
+        setSearchText
       }}
     >
       {children}

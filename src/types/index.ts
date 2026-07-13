@@ -13,8 +13,40 @@ export type PageId =
   | 'relatorios'
   | 'configuracoes';
 
+export interface Substation {
+  id: string;
+  name: string;
+  state: string;
+  stateName: string;
+  subsystem: string;
+  lat: number;
+  lon: number;
+  voltageLevel: number;
+}
+
+export interface TransmissionLine {
+  id: string;
+  name: string;
+  voltageKv: number;
+  networkType: string;
+  ownerAgent: string;
+  lengthKm: number;
+  subsystem: string;
+  stateDe: string;
+  statePara: string;
+  substationDe: string;
+  substationPara: string;
+  latDe: number;
+  lonDe: number;
+  latPara: number;
+  lonPara: number;
+  operationDate: string;
+  spans: TransmissionSpan[];
+}
+
 export interface TransmissionSpan {
   id: string;
+  lineId?: string;
   lineName: string;
   startTower: string;
   endTower: string;
@@ -22,6 +54,12 @@ export interface TransmissionSpan {
   lengthKm: number;
   latitude: number;
   longitude: number;
+  latStart?: number;
+  lonStart?: number;
+  latEnd?: number;
+  lonEnd?: number;
+  state?: string;
+  subsystem?: string;
   vegetationIndex: number;      // 0.00 to 1.00
   growth15d: number;            // percentage e.g. 8
   growth30d: number;            // percentage e.g. 18

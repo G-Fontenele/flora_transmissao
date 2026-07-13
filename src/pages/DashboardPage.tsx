@@ -21,7 +21,7 @@ import { EventsTable } from '../components/EventsTable';
 import { TrendChart } from '../components/TrendChart';
 
 export const DashboardPage: React.FC = () => {
-  const { spans, events, setActivePage } = useApp();
+  const { spans, events, setActivePage, transmissionLines = [], substations = [] } = useApp();
 
   // Calculate 8 Essential Executive KPIs
   const criticalSpansCount = spans.filter(s => s.status === 'Critica' || s.status === 'Alta').length;
@@ -29,21 +29,21 @@ export const DashboardPage: React.FC = () => {
     spans.filter(s => s.status === 'Critica' || s.status === 'Alta').reduce((acc, s) => acc + s.lengthKm, 0) * 10
   ) / 10;
   const openEventsCount = events.filter(e => e.status === 'Aberto' || e.status === 'Em analise').length;
-  const avgVi = Math.round((spans.reduce((acc, s) => acc + s.vegetationIndex, 0) / spans.length) * 100) / 100;
-  const avgGr30 = Math.round(spans.reduce((acc, s) => acc + s.growth30d, 0) / spans.length);
+  const avgVi = Math.round((spans.reduce((acc, s) => acc + s.vegetationIndex, 0) / (spans.length || 1)) * 100) / 100;
+  const avgGr30 = Math.round(spans.reduce((acc, s) => acc + s.growth30d, 0) / (spans.length || 1));
   const pendingCost = Math.round(
     spans.filter(s => s.status === 'Critica' || s.status === 'Alta').reduce((acc, s) => acc + s.estimatedCost, 0)
   );
   const estimatedSavings = Math.round(pendingCost * 0.28); // 28% savings from priority grouping vs ad-hoc
   const compliancePercent = Math.round(
-    (spans.filter(s => s.status === 'Normal' || s.status === 'Atencao').length / spans.length) * 100
+    ((spans.filter(s => s.status === 'Normal' || s.status === 'Atencao').length) / (spans.length || 1)) * 100
   );
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Dashboard Executivo FLORA"
-        subtitle="Centro de Monitoramento Operacional de Vegetação e Faixas de Servidão"
+        subtitle={`SIN — Sistema Interligado Nacional (${transmissionLines.length} Linhas de Transmissão e ${substations.length} Subestações geolocalizadas)`}
         actions={
           <div className="flex gap-2">
             <button
