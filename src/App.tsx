@@ -13,7 +13,9 @@ import {
   Activity,
   Radio,
   Menu,
-  X
+  X,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { AppProvider, useApp } from './context/AppContext';
 import { PageId } from './types';
@@ -30,8 +32,10 @@ import { SettingsPage } from './pages/SettingsPage';
 const NavigationSidebar: React.FC<{
   mobileOpen: boolean;
   setMobileOpen: (open: boolean) => void;
-}> = ({ mobileOpen, setMobileOpen }) => {
-  const { activePage, setActivePage, events, activities } = useApp();
+  isCollapsed: boolean;
+  setIsCollapsed: (collapsed: boolean) => void;
+}> = ({ mobileOpen, setMobileOpen, isCollapsed, setIsCollapsed }) => {
+  const { activePage, setActivePage, events, activities, transmissionLines = [], substations = [] } = useApp();
 
   const openEventsCount = events.filter(e => e.status === 'Aberto').length;
   const overdueCount = activities.filter(a => a.status === 'Atrasado').length;
@@ -61,9 +65,10 @@ const NavigationSidebar: React.FC<{
   ];
 
   const sidebarClasses = `
-    fixed inset-y-0 left-0 z-40 w-64 bg-industrial-900 border-r border-industrial-700 flex flex-col justify-between transition-transform duration-200 ease-in-out
+    fixed inset-y-0 left-0 z-40 bg-industrial-900 border-r border-industrial-700 flex flex-col justify-between transition-all duration-300 ease-in-out
     lg:static lg:translate-x-0
-    ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
+    ${mobileOpen ? 'translate-x-0 w-64' : '-translate-x-full'}
+    ${isCollapsed ? 'lg:w-16' : 'lg:w-64'}
   `;
 
   return (
@@ -77,39 +82,52 @@ const NavigationSidebar: React.FC<{
       )}
 
       <aside className={sidebarClasses}>
-        <div className="flex flex-col h-full overflow-y-auto">
+        <div className="flex flex-col h-full overflow-y-auto overflow-x-hidden">
           {/* Logo & Product Brand */}
-          <div className="p-5 border-b border-industrial-700 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded bg-gradient-to-br from-flora-cyan to-flora-green flex items-center justify-center shadow-lg glow-cyan">
+          <div className={`p-4 border-b border-industrial-700 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} transition-all`}>
+            <div className="flex items-center gap-3 overflow-hidden">
+              <div className="w-9 h-9 flex-shrink-0 rounded bg-gradient-to-br from-flora-cyan to-flora-green flex items-center justify-center shadow-lg glow-cyan">
                 <Activity className="w-5 h-5 text-black stroke-[2.5]" />
               </div>
-              <div>
-                <span className="text-base font-bold tracking-wider text-white flex items-center gap-1 font-mono">
-                  FLORA
-                  <span className="text-flora-cyan text-[10px] font-mono bg-industrial-800 px-1.5 py-0.5 rounded border border-industrial-600">
-                    TRANSMISSION
+              {!isCollapsed && (
+                <div className="transition-opacity duration-200">
+                  <span className="text-base font-bold tracking-wider text-white flex items-center gap-1 font-mono">
+                    FLORA
+                    <span className="text-flora-cyan text-[10px] font-mono bg-industrial-800 px-1.5 py-0.5 rounded border border-industrial-600">
+                      TRANSMISSION
+                    </span>
                   </span>
-                </span>
-                <span className="text-[10px] text-gray-400 block font-mono">
-                  Centro Operacional v1.0
-                </span>
-              </div>
+                  <span className="text-[10px] text-gray-400 block font-mono">
+                    Centro Operacional v1.0
+                  </span>
+                </div>
+              )}
             </div>
 
-            <button
-              onClick={() => setMobileOpen(false)}
-              className="lg:hidden p-1 text-gray-400 hover:text-white"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                title={isCollapsed ? 'Expandir Menu Lateral' : 'Colapsar Menu Lateral'}
+                className="hidden lg:flex p-1.5 rounded hover:bg-industrial-800 text-gray-400 hover:text-white transition-colors"
+              >
+                {isCollapsed ? <ChevronRight className="w-4 h-4 text-flora-cyan" /> : <ChevronLeft className="w-4 h-4" />}
+              </button>
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="lg:hidden p-1 text-gray-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           {/* Navigation Links */}
-          <nav className="p-3 space-y-1 font-mono text-xs flex-1">
-            <span className="px-3 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest block">
-              MÓDULOS DE GESTÃO
-            </span>
+          <nav className="p-2.5 space-y-1 font-mono text-xs flex-1">
+            {!isCollapsed && (
+              <span className="px-3 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest block transition-opacity">
+                MÓDULOS DE GESTÃO
+              </span>
+            )}
 
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -122,21 +140,26 @@ const NavigationSidebar: React.FC<{
                     setActivePage(item.id);
                     setMobileOpen(false);
                   }}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded transition-all group ${
+                  title={isCollapsed ? item.label : undefined}
+                  className={`w-full flex items-center ${isCollapsed ? 'justify-center py-3 px-2' : 'justify-between px-3 py-2.5'} rounded transition-all group relative ${
                     isActive
                       ? 'bg-industrial-700/80 text-white border-l-4 border-flora-cyan font-bold shadow-md'
                       : 'text-gray-400 hover:bg-industrial-800 hover:text-gray-200'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <Icon className={`w-4 h-4 ${isActive ? 'text-flora-cyan' : 'text-gray-400 group-hover:text-gray-300'}`} />
-                    <span className="truncate">{item.label}</span>
+                  <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-2.5'}`}>
+                    <Icon className={`w-4 h-4 flex-shrink-0 transition-transform ${isActive ? 'text-flora-cyan scale-110' : 'text-gray-400 group-hover:text-gray-300'}`} />
+                    {!isCollapsed && <span className="truncate">{item.label}</span>}
                   </div>
 
-                  {item.badge !== undefined && item.badge > 0 && (
+                  {!isCollapsed && item.badge !== undefined && item.badge > 0 && (
                     <span className={`px-1.5 py-0.2 rounded text-[10px] font-mono font-bold ${item.badgeColor}`}>
                       {item.badge}
                     </span>
+                  )}
+
+                  {isCollapsed && item.badge !== undefined && item.badge > 0 && (
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-flora-red animate-pulse shadow-sm" />
                   )}
                 </button>
               );
@@ -144,30 +167,38 @@ const NavigationSidebar: React.FC<{
           </nav>
 
           {/* Telemetry Status Footer */}
-          <div className="p-4 border-t border-industrial-700 bg-industrial-950/60 font-mono text-[11px] text-gray-400 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5 text-flora-green font-bold">
-                <Radio className="w-3.5 h-3.5 animate-pulse" />
-                TELEMETRIA ATIVA
-              </span>
-              <span className="text-[10px] bg-industrial-900 px-1.5 py-0.5 rounded border border-industrial-700 text-gray-300">
-                Standalone
-              </span>
-            </div>
-            <div className="text-[10px] text-gray-500 space-y-0.5">
-              <div className="flex justify-between">
-                <span>Malha Monitorada:</span>
-                <span className="text-gray-300">504 km (3 LTs)</span>
+          <div className={`p-3 border-t border-industrial-700 bg-industrial-950/60 font-mono text-[11px] text-gray-400 transition-all ${isCollapsed ? 'text-center' : 'space-y-2'}`}>
+            {isCollapsed ? (
+              <div title={`Telemetria Ativa SIN (${transmissionLines.length || 1840} LTs)`} className="flex justify-center py-1">
+                <Radio className="w-4 h-4 text-flora-green animate-pulse" />
               </div>
-              <div className="flex justify-between">
-                <span>Última Varredura Satélite:</span>
-                <span className="text-gray-300">Hoje, 14:32</span>
-              </div>
-            </div>
-            <div className="pt-1 border-t border-industrial-800 text-[9px] text-gray-600 flex justify-between items-center">
-              <span>Zero PI System/Tag dep.</span>
-              <Shield className="w-3 h-3 text-flora-cyan" />
-            </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-flora-green font-bold">
+                    <Radio className="w-3.5 h-3.5 animate-pulse" />
+                    TELEMETRIA ATIVA
+                  </span>
+                  <span className="text-[10px] bg-industrial-900 px-1.5 py-0.5 rounded border border-industrial-700 text-gray-300">
+                    Standalone
+                  </span>
+                </div>
+                <div className="text-[10px] text-gray-500 space-y-0.5">
+                  <div className="flex justify-between">
+                    <span>Malha SIN:</span>
+                    <span className="text-gray-300">{transmissionLines.length || 1840} LTs ({substations.length || 922} SEs)</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Varredura Satélite:</span>
+                    <span className="text-gray-300">Hoje, 14:32</span>
+                  </div>
+                </div>
+                <div className="pt-1 border-t border-industrial-800 text-[9px] text-gray-600 flex justify-between items-center">
+                  <span>Zero PI System/Tag dep.</span>
+                  <Shield className="w-3 h-3 text-flora-cyan" />
+                </div>
+              </>
+            )}
           </div>
         </div>
       </aside>
@@ -177,11 +208,13 @@ const NavigationSidebar: React.FC<{
 
 const MainContent: React.FC<{
   setMobileOpen: (open: boolean) => void;
-}> = ({ setMobileOpen }) => {
+  isCollapsed: boolean;
+  setIsCollapsed: (collapsed: boolean) => void;
+}> = ({ setMobileOpen, isCollapsed, setIsCollapsed }) => {
   const { activePage } = useApp();
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen bg-industrial-900 overflow-x-hidden">
+    <div className="flex-1 flex flex-col min-h-screen bg-industrial-900 overflow-x-hidden transition-all duration-300">
       {/* Top Bar */}
       <header className="h-14 bg-industrial-800 border-b border-industrial-700 flex items-center justify-between px-4 sm:px-6 z-20">
         <div className="flex items-center gap-3">
@@ -191,8 +224,15 @@ const MainContent: React.FC<{
           >
             <Menu className="w-5 h-5" />
           </button>
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            title={isCollapsed ? 'Expandir Menu Lateral' : 'Colapsar Menu Lateral'}
+            className="hidden lg:flex p-1.5 rounded bg-industrial-900 border border-industrial-700 text-gray-400 hover:text-white hover:border-flora-cyan transition-colors items-center gap-1.5"
+          >
+            {isCollapsed ? <ChevronRight className="w-4 h-4 text-flora-cyan" /> : <ChevronLeft className="w-4 h-4 text-gray-400" />}
+          </button>
           <span className="font-mono text-xs text-gray-400 hidden sm:inline">
-            SISTEMA DE GESTÃO DE FAIXAS DE SERVIDÃO — <strong className="text-white">SETOR ELÉTRICO NACIONAL</strong>
+            SISTEMA DE GESTÃO DE FAIXAS DE SERVIDÃO — <strong className="text-white">SETOR ELÉTRICO NACIONAL (SIN)</strong>
           </span>
         </div>
 
@@ -204,7 +244,7 @@ const MainContent: React.FC<{
 
           <div className="hidden md:flex items-center gap-2 bg-industrial-900 px-3 py-1 rounded border border-industrial-700 text-gray-400">
             <span>Rede:</span>
-            <strong className="text-white">500 kV | 345 kV | 230 kV</strong>
+            <strong className="text-white">800 kV | 500 kV | 345 kV | 230 kV</strong>
           </div>
         </div>
       </header>
@@ -232,12 +272,22 @@ const MainContent: React.FC<{
 
 export const App: React.FC = () => {
   const [mobileOpen, setMobileOpen] = React.useState<boolean>(false);
+  const [isCollapsed, setIsCollapsed] = React.useState<boolean>(false);
 
   return (
     <AppProvider>
       <div className="flex min-h-screen bg-industrial-900 text-gray-200">
-        <NavigationSidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
-        <MainContent setMobileOpen={setMobileOpen} />
+        <NavigationSidebar
+          mobileOpen={mobileOpen}
+          setMobileOpen={setMobileOpen}
+          isCollapsed={isCollapsed}
+          setIsCollapsed={setIsCollapsed}
+        />
+        <MainContent
+          setMobileOpen={setMobileOpen}
+          isCollapsed={isCollapsed}
+          setIsCollapsed={setIsCollapsed}
+        />
       </div>
     </AppProvider>
   );
