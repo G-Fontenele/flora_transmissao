@@ -12,14 +12,18 @@ export const TrendChart: React.FC<TrendChartProps> = ({ type = 'vi' }) => {
   const isVi = type === 'vi';
   const isKm = type === 'km';
 
-  const maxVal = isVi ? 1.0 : isKm ? 60 : 100;
-  const minVal = isVi ? 0.0 : isKm ? 0 : 50;
-  const range = maxVal - minVal;
+  const rawValues = data.map(d => isVi ? d.viMedio : isKm ? d.kmCriticos : d.conformidade);
+  const dataMax = Math.max(...rawValues);
+  const dataMin = Math.min(...rawValues);
+
+  const maxVal = isVi ? 1.0 : isKm ? Math.max(1200, Math.ceil((dataMax * 1.15) / 100) * 100) : 100;
+  const minVal = isVi ? 0.0 : isKm ? 0 : Math.min(50, Math.floor(dataMin / 10) * 10);
+  const range = (maxVal - minVal) || 1;
 
   // SVG coordinates [700 x 220]
   const points = data.map((d, index) => {
     const val = isVi ? d.viMedio : isKm ? d.kmCriticos : d.conformidade;
-    const x = 50 + index * (600 / (data.length - 1));
+    const x = 50 + index * (600 / (Math.max(1, data.length - 1)));
     const y = 200 - ((val - minVal) / range) * 160;
     return { x, y, val, month: d.month };
   });
@@ -34,7 +38,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({ type = 'vi' }) => {
   const fillColor = isVi ? 'rgba(6, 182, 212, 0.15)' : isKm ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)';
 
   return (
-    <div className="bg-industrial-800 border border-industrial-600 rounded-lg p-4 font-mono select-none">
+    <div className="bg-industrial-800 border border-industrial-600 rounded-lg p-4 font-mono select-none overflow-hidden">
       <div className="flex items-center justify-between mb-4 border-b border-industrial-700 pb-2">
         <span className="text-xs font-bold text-gray-300 uppercase tracking-wider">
           {isVi
@@ -49,7 +53,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({ type = 'vi' }) => {
       </div>
 
       <div className="aspect-[16/5] w-full relative">
-        <svg viewBox="0 0 700 230" className="w-full h-full overflow-visible">
+        <svg viewBox="0 0 700 230" className="w-full h-full overflow-hidden">
           {/* Horizontal Grid lines */}
           {[0.2, 0.4, 0.6, 0.8, 1.0].map((frac, i) => {
             const y = 200 - frac * 160;
